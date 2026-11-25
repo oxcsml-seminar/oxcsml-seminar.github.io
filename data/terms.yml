@@ -1,0 +1,23 @@
+# Oxford Full Term start dates (Week 1 Sunday); check before adding years.
+# https://www.ox.ac.uk/about/the-university/facts-and-figures/dates-of-term
+- {name: Michaelmas, year: 2026, start: 2026-10-11}
+- {name: Hilary, year: 2027, start: 2027-01-17}
+- {name: Trinity, year: 2027, start: 2027-04-25}
+- {name: Michaelmas, year: 2027, start: 2027-10-10}
+- {name: Hilary, year: 2028, start: 2028-01-16}
+- {name: Trinity, year: 2028, start: 2028-04-23}
+- {name: Michaelmas, year: 2028, start: 2028-10-08}
+- {name: Hilary, year: 2029, start: 2029-01-14}
+- {name: Trinity, year: 2029, start: 2029-04-22}
+- {name: Michaelmas, year: 2029, start: 2029-10-07}
+- {name: Hilary, year: 2030, start: 2030-01-13}
+- {name: Trinity, year: 2030, start: 2030-04-28}
+- {name: Michaelmas, year: 2030, start: 2030-10-13}
+- {name: Hilary, year: 2031, start: 2031-01-19}
+- {name: Trinity, year: 2031, start: 2031-04-27}
+- {name: Michaelmas, year: 2031, start: 2031-10-12}
+- {name: Hilary, year: 2032, start: 2032-01-18}
+- {name: Trinity, year: 2032, start: 2032-04-25}
+- {name: Michaelmas, year: 2032, start: 2032-10-10}
+- {name: Hilary, year: 2033, start: 2033-01-16}
+- {name: Trinity, year: 2033, start: 2033-04-24}

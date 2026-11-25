@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="The Oxford Computational Statistics and Machine Learning Seminar — talks, speakers, programme and calendar at the Department of Statistics, University of Oxford.">
+  <meta name="theme-color" content="#102a4b">
+  <title>OxCSML Seminar Series | University of Oxford</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#home" aria-label="OxCSML Seminar — home">
+        <span class="brand-mark" aria-hidden="true"><span>OX</span><span class="mark-line"></span><span>CSML</span></span>
+        <span class="brand-name"><strong>OxCSML</strong><small>Seminar series</small></span>
+      </a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="#programme">Programme</a>
+        <a href="#calendar">Calendar</a>
+        <a href="#home">About</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <a class="header-cta" href="#next-talk">Next talk <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="home" aria-labelledby="hero-title">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> University of Oxford <span class="eyebrow-separator">/</span> Department of Statistics</div>
+          <h1 id="hero-title">OxCSML Seminar Series</h1>
+          <div class="hero-description">
+            <p>The OxCSML Seminar is a research seminar series hosted by the Department of Statistics at the University of Oxford. We invite external speakers to present recent work in statistics, machine learning and related areas.</p>
+            <p>The series provides an opportunity for researchers and students to learn about current research and engage in discussion with visiting speakers. All members of the research community are welcome to attend.</p>
+            <p>Researchers and students from other departments and institutions are very welcome, including Master's students. No affiliation with the Department of Statistics is required.</p>
+            <p class="hero-contact-note">To suggest a speaker or topic, or to offer to give a talk, please <a href="#contact">contact one of the organisers <span aria-hidden="true">↗</span></a>.</p>
+          </div>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#programme">Explore the programme <span aria-hidden="true">↗</span></a>
+            <a class="btn btn-outline" href="#calendar"><span class="icon-calendar" aria-hidden="true">▦</span> Browse calendar</a>
+          </div>
+          <div class="hero-footnote"><span class="small-line"></span> Open to all researchers and students · Including MSc students</div>
+        </div>
+        <aside class="next-card" id="next-talk" aria-labelledby="next-label">
+          <div class="next-topline"><span class="label-caps" id="next-label">UP NEXT</span><span class="status-chip"><span class="status-dot"></span> Seminar series</span></div>
+          <div id="next-content" aria-live="polite">
+            <div class="next-placeholder-icon" aria-hidden="true">✳</div>
+            <div class="next-date">Next announcement</div>
+            <h2>Next talk to be announced.</h2>
+            <p>New seminar details will appear here as soon as they are confirmed.</p>
+          </div>
+          <div class="next-footer">
+            <div class="next-location"><span class="pin-icon" aria-hidden="true">⌖</span> Department of Statistics, Oxford</div>
+            <a href="#calendar" class="inline-arrow">See the calendar <span aria-hidden="true">↗</span></a>
+          </div>
+        </aside>
+      </div>
+      <div class="hero-side-label" aria-hidden="true">OXFORD · CSML · SEMINARS</div>
+    </section>
+
+    <section class="quick-facts" aria-label="Practical information">
+      <div class="container facts-grid">
+        <div class="fact"><span class="fact-icon" aria-hidden="true">◇</span><div><small>LOCATION</small><strong>Department of Statistics</strong><span>24–29 St Giles’, Oxford</span></div></div>
+        <div class="fact"><span class="fact-icon" aria-hidden="true">◷</span><div><small>WHEN</small><strong>Fridays, 15:00–16:00</strong><span>Usual time · subject to change</span></div></div>
+        <div class="fact"><span class="fact-icon" aria-hidden="true">⌗</span><div><small>ROOM</small><strong>Varies by talk</strong><span>Confirmed in each event listing</span></div></div>
+      </div>
+    </section>
+
+    <section class="section programme-section" id="programme" aria-labelledby="programme-title">
+      <div class="container">
+        <div class="section-heading heading-with-action">
+          <div><div class="section-kicker">01 <span class="kicker-line"></span> SEMINAR SERIES</div><h2 id="programme-title">Programme</h2><p>Browse talks by Oxford term and week. Select any talk for its abstract, speaker details and available slides.</p></div>
+          <a class="text-link" href="#calendar">View term calendar <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="programme-tools">
+          <div class="tabs" role="group" aria-label="Filter talks by date">
+            <button type="button" class="tab active" data-filter="all" aria-pressed="true">All talks <span id="count-all" class="tab-count">0</span></button>
+            <button type="button" class="tab" data-filter="upcoming" aria-pressed="false">Upcoming <span id="count-upcoming" class="tab-count">0</span></button>
+            <button type="button" class="tab" data-filter="past" aria-pressed="false">Past <span id="count-past" class="tab-count">0</span></button>
+          </div>
+          <label class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><span class="sr-only">Search talks</span><input id="talk-search" type="search" placeholder="Search talks or speakers…" autocomplete="off"></label>
+        </div>
+        <div id="programme-list" class="programme-list" aria-live="polite"></div>
+        <div class="programme-note"><span aria-hidden="true">ⓘ</span> Weeks follow the University of Oxford's eight-week Full Term calendar. <a href="https://www.ox.ac.uk/about/the-university/facts-and-figures/dates-of-term" target="_blank" rel="noopener noreferrer">Oxford term dates <span aria-hidden="true">↗</span></a></div>
+      </div>
+    </section>
+
+    <section class="section calendar-section" id="calendar" aria-labelledby="calendar-title">
+      <div class="container">
+        <div class="section-heading"><div class="section-kicker">02 <span class="kicker-line"></span> OXFORD FULL TERM</div><h2 id="calendar-title">Calendar</h2><p>View the full eight weeks of each Oxford term, including weeks that fall in different calendar months. Select a talk to read its abstract and details.</p></div>
+        <div class="calendar-shell">
+          <div class="calendar-toolbar">
+            <div><div class="calendar-overline">EIGHT-WEEK TERM VIEW</div><h3 id="term-heading" aria-live="polite">Michaelmas 2026</h3><p class="term-range" id="term-range"></p></div>
+            <div class="calendar-controls">
+              <label class="sr-only" for="term-select">Choose Oxford term</label>
+              <select id="term-select" aria-label="Choose Oxford term"></select>
+              <button class="cal-arrow" id="term-prev" type="button" aria-label="Previous term">←</button>
+              <button class="cal-arrow" id="term-next" type="button" aria-label="Next term">→</button>
+            </div>
+          </div>
+          <div class="calendar-scroller" tabindex="0" aria-label="Full term seminar calendar, scroll horizontally on small screens">
+            <div class="term-calendar-grid" id="term-calendar" role="grid" aria-label="Term seminar calendar"></div>
+          </div>
+          <div class="calendar-bottom"><span><span class="legend-marker"></span> Scheduled talk</span><span>MTW = Michaelmas; HTW = Hilary; TTW = Trinity. Times are UK local.</span></div>
+        </div>
+        <p class="programme-note">The calendar follows the University's eight-week <a href="https://www.ox.ac.uk/about/the-university/facts-and-figures/dates-of-term" target="_blank" rel="noopener noreferrer">Full Term dates <span aria-hidden="true">↗</span></a>. Oxford weeks run Sunday–Saturday.</p>
+      </div>
+    </section>
+
+    <section class="contact-section" id="contact" aria-labelledby="contact-title">
+      <div class="container contact-grid">
+        <div>
+          <div class="section-kicker light-kicker">03 <span class="kicker-line"></span> ORGANISING TEAM</div>
+          <h2 id="contact-title">Contact</h2>
+          <p>For questions about the seminar, or to suggest a speaker, propose a topic or offer to give a talk, please contact any of the organisers.</p>
+          <ul class="organiser-list">
+            <li><span>Arya Akhavan</span><a href="mailto:arya.akhavan@stats.ox.ac.uk">arya.akhavan@stats.ox.ac.uk</a></li>
+            <li><span>Eugenio Clerico</span><a href="mailto:eugenio.clerico@stats.ox.ac.uk">eugenio.clerico@stats.ox.ac.uk</a></li>
+            <li><span>Benjamin Dupuis</span><a href="mailto:benjamin.dupuis@stats.ox.ac.uk">benjamin.dupuis@stats.ox.ac.uk</a></li>
+            <li><span>Gavin Kerrigan</span><a href="mailto:gavin.kerrigan@stats.ox.ac.uk">gavin.kerrigan@stats.ox.ac.uk</a></li>
+          </ul>
+        </div>
+        <div class="address-card"><small>SEMINAR VENUE</small><h3>Department of Statistics</h3><p>University of Oxford<br>24–29 St Giles’<br>Oxford OX1 3LB<br>United Kingdom</p><p class="venue-note">Seminars usually take place on Fridays, 15:00–16:00, subject to change. Please check each talk for the room and any changes to the time.</p><a href="https://www.google.com/maps/search/?api=1&query=Department+of+Statistics+24-29+St+Giles+Oxford" target="_blank" rel="noopener noreferrer">Location on map <span aria-hidden="true">↗</span></a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="container footer-inner"><div><strong>OxCSML Seminar</strong><p>Department of Statistics · University of Oxford</p></div><div class="footer-links"><a href="#home">Back to top ↑</a><a href="https://csml.stats.ox.ac.uk/" target="_blank" rel="noopener noreferrer">OxCSML research group ↗</a><a id="organisers-link" href="#" hidden>Organisers ↗</a></div><small id="footer-year"></small></div></footer>
+
+  <dialog id="talk-dialog" class="talk-dialog" aria-labelledby="dialog-title"><div class="dialog-head"><span id="dialog-title" class="label-caps">SEMINAR DETAILS</span><button type="button" class="dialog-close" id="dialog-close" aria-label="Close details">×</button></div><div id="dialog-body"></div></dialog>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Copy this file to data/talks/YYYY-MM-DD-speaker-name.yml and fill it in.
+# Only `date` is required; leave anything unconfirmed blank and the site shows "TBC".
+# Everything here is PUBLIC once pushed.
+date: 2026-12-04
+time: 15:00
+endTime: 16:00
+room:
+speaker:
+affiliation:
+speakerUrl:
+title: >-
+  Indented lines below `>-` can contain any characters, including colons.
+abstract: >-
+  Same here. Lines are joined with spaces; a blank line starts a new paragraph.
+slides:          # e.g. assets/slides/speaker.pdf, or an https:// link
+zoomUrl:         # passcodes are never published
+status: provisional   # provisional or confirmed
