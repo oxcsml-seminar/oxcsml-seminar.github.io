@@ -110,7 +110,7 @@
     if (!shown.length) {
       const heading = q ? "No matching talks" : { past: "No past talks yet", upcoming: "More talks coming soon" }[filter] || "The programme is taking shape";
       const text = q ? "Try another speaker, topic or keyword." : "Confirmed speakers, dates, abstracts and slides will appear here as soon as they are available.";
-      out.replaceChildren(add(el("div", "empty-state"), el("div", "empty-state-symbol", "✳"), el("h3", "", heading), el("p", "", text),
+      out.replaceChildren(add(el("div", "empty-state"), el("h3", "", heading), el("p", "", text),
         el("a", "", "Questions or suggestions? Contact the organisers ↗", { href: "#contact" })));
       return;
     }
