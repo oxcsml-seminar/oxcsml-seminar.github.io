@@ -105,7 +105,11 @@
     const shown = talks
       .filter(t => filter === "all" || (filter === "upcoming") === isUpcoming(t))
       .filter(t => [t.title, t.speaker, t.affiliation, t.abstract, t.room].join(" ").toLowerCase().includes(q))
-      .sort((a, b) => filter === "upcoming" ? byDateTime(a, b) : byDateTime(b, a));
+      .sort((a, b) => {
+        const ua = isUpcoming(a), ub = isUpcoming(b);
+        if (ua !== ub) return ua ? -1 : 1;
+        return ua ? byDateTime(a, b) : byDateTime(b, a);
+      });
     const out = $("programme-list");
     if (!shown.length) {
       const heading = q ? "No matching talks" : { past: "No past talks yet", upcoming: "More talks coming soon" }[filter] || "The programme is taking shape";
