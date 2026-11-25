@@ -3,7 +3,6 @@
   "use strict";
   const $ = id => document.getElementById(id);
   const DAY = 86400000;
-  const TERM_CODES = { Michaelmas: "MT", Hilary: "HT", Trinity: "TT" };
   const terms = window.OXCSML_TERMS || [];
 
   // Dates are YYYY-MM-DD strings, times HH:MM; "now" is UK local time.
@@ -49,7 +48,7 @@
   const getTerm = date => {
     const t = terms[termIndexOf(date)];
     if (!t) return { week: null, label: `Outside Full Term · ${date.slice(0, 4)}` };
-    return { code: TERM_CODES[t.name], week: Math.floor((toMs(date) - toMs(t.start)) / (7 * DAY)) + 1, label: `${t.name} ${t.year}` };
+    return { week: Math.floor((toMs(date) - toMs(t.start)) / (7 * DAY)) + 1, label: `${t.name} ${t.year}` };
   };
 
   const el = (tag, cls, text, attrs = {}) => {
@@ -118,7 +117,7 @@
     const groups = new Map(); // term label -> week label -> talks
     for (const talk of shown) {
       const term = getTerm(talk.date);
-      const week = term.week ? `${term.code}W${term.week} · Week ${term.week} · ${shortDate(talk.date)}` : "Outside term";
+      const week = term.week ? `Week ${term.week}\n${shortDate(talk.date)}` : "Outside term";
       if (!groups.has(term.label)) groups.set(term.label, new Map());
       const weeks = groups.get(term.label);
       weeks.set(week, [...(weeks.get(week) || []), talk]);
@@ -149,7 +148,7 @@
     for (let week = 0; week < 8; week++) {
       const first = start + week * 7 * DAY;
       cells.push(add(el("div", "term-week-cell", null, { role: "rowheader" }),
-        el("strong", "", `${TERM_CODES[term.name]}W${week + 1}`), el("small", "", `${dayMonth(first)} – ${dayMonth(first + 6 * DAY)}`)));
+        el("strong", "", `Week ${week + 1}`), el("small", "", `${dayMonth(first)} – ${dayMonth(first + 6 * DAY)}`)));
       for (let d = 0; d < 7; d++) {
         const date = fromMs(first + d * DAY);
         const day = el("span", "term-day-date", String(Number(date.slice(8, 10))));
