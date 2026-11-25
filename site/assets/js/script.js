@@ -1,275 +1,218 @@
-/* OxCSML Seminar: vanilla JavaScript; no framework, cookies, tracking or backend. */
+/* OxCSML Seminar: renders the next talk, programme and term calendar from data.js. */
 (() => {
   "use strict";
-  const config = window.OXCSML_CONFIG || {};
+  const $ = id => document.getElementById(id);
+  const DAY = 86400000;
+  const TERM_CODES = { Michaelmas: "MT", Hilary: "HT", Trinity: "TT" };
   const terms = window.OXCSML_TERMS || [];
-  const rawTalks = window.OXCSML_TALKS || [];
-  const $ = (id) => document.getElementById(id);
-  const MS_DAY = 86400000;
-  const british = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-  const getUKNow = () => {
-    const parts = Object.fromEntries(british.formatToParts(new Date()).map(p => [p.type, p.value]));
-    return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}`, year: Number(parts.year), month: Number(parts.month)-1 };
-  };
-  const isoDate = (y, m, d) => `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-  const dateObject = (s) => new Date(`${s}T12:00:00Z`);
-  const asDayMs = (s) => Date.parse(`${s}T00:00:00Z`);
-  const fmt = (s, opt) => new Intl.DateTimeFormat("en-GB", { timeZone:"UTC", ...opt }).format(dateObject(s));
-  const longDate = s => fmt(s, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
-  const shortDate = s => fmt(s, { weekday:"short", day:"numeric", month:"short", year:"numeric" });
-  const monthName = (y,m) => new Intl.DateTimeFormat("en-GB", { timeZone:"UTC", month:"long", year:"numeric" }).format(new Date(Date.UTC(y,m,1)));
-  const isValidDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(asDayMs(s)) && dateObject(s).toISOString().slice(0,10) === s;
-  const validUrl = (input, allowRelative=false) => {
-    if (!input || typeof input !== "string") return "";
+
+  // Dates are YYYY-MM-DD strings, times HH:MM; "now" is UK local time.
+  const now = (() => {
+    const opts = { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" };
+    const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", opts).formatToParts(new Date()).map(x => [x.type, x.value]));
+    return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}`, year: p.year };
+  })();
+  const toMs = s => Date.parse(`${s}T00:00:00Z`);
+  const fromMs = ms => new Date(ms).toISOString().slice(0, 10);
+  const isValidDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(toMs(s)) && fromMs(toMs(s)) === s;
+  const fmt = (s, opts) => new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", ...opts }).format(new Date(`${s}T12:00:00Z`));
+  const longDate = s => fmt(s, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const shortDate = s => fmt(s, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  const timeRange = t => t.endTime ? `${t.time}–${t.endTime}` : t.time;
+  const byDateTime = (a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time);
+
+  // Only http(s) links; relative paths (e.g. assets/slides/x.pdf) only where allowed.
+  const safeUrl = (s, allowRelative = false) => {
+    if (!s || !(allowRelative || /^https?:\/\//i.test(s))) return "";
     try {
-      const url = new URL(input, location.href);
-      if (url.protocol === "https:" || url.protocol === "http:") {
-        if (allowRelative) return url.href;
-        if (/^https?:\/\//i.test(input)) return url.href;
-      }
-    } catch (_) { /* invalid URL */ }
-    return "";
-  };
-  const talkList = rawTalks.filter(t => t && isValidDate(t.date) && t.id).map(t => ({
-    id:String(t.id), date:String(t.date), time:String(t.time || ""), endTime:String(t.endTime || ""),
-    room:String(t.room || ""), speaker:String(t.speaker || "Speaker to be announced"),
-    affiliation:String(t.affiliation || ""), speakerUrl:String(t.speakerUrl || ""),
-    title:String(t.title || "Title to be announced"), abstract:String(t.abstract || ""), slides:String(t.slides || ""),
-    zoomUrl:String(t.zoomUrl || ""),
-    status:t.status === "provisional" ? "provisional" : "confirmed"
-  }));
-  const now = () => getUKNow();
-  const isUpcoming = t => (t.date > now().date) || (t.date === now().date && (!t.time || t.time >= now().time));
-  const getTerm = date => {
-    const d = asDayMs(date);
-    for (const t of terms) {
-      const diff = Math.floor((d - asDayMs(t.start)) / MS_DAY);
-      if (diff >= 0 && diff < 56) return { name:t.name, year:t.year, week:Math.floor(diff/7)+1, label:`${t.name} ${t.year}` };
+      const url = new URL(s, location.href);
+      return /^https?:$/.test(url.protocol) ? url.href : "";
+    } catch {
+      return "";
     }
-    return { name:"Outside Full Term", year:Number(date.slice(0,4)), week:null, label:`Outside Full Term · ${date.slice(0,4)}` };
   };
-  const el = (tag, cls, text) => {
+
+  const talks = (window.OXCSML_TALKS || []).filter(t => t && isValidDate(t.date)).map(t => ({
+    date: t.date, time: t.time || "", endTime: t.endTime || "", room: t.room || "",
+    speaker: t.speaker || "Speaker to be announced", affiliation: t.affiliation || "", speakerUrl: t.speakerUrl || "",
+    title: t.title || "Title to be announced", abstract: t.abstract || "", slides: t.slides || "", zoomUrl: t.zoomUrl || "",
+    provisional: t.status === "provisional"
+  }));
+  const isUpcoming = t => t.date > now.date || (t.date === now.date && (!t.time || t.time >= now.time));
+  const upcoming = talks.filter(isUpcoming).sort(byDateTime);
+
+  // Oxford Full Term: eight weeks, each Sunday–Saturday, from the term's start date.
+  const termIndexOf = date => terms.findIndex(t => {
+    const diff = toMs(date) - toMs(t.start);
+    return diff >= 0 && diff < 56 * DAY;
+  });
+  const getTerm = date => {
+    const t = terms[termIndexOf(date)];
+    if (!t) return { week: null, label: `Outside Full Term · ${date.slice(0, 4)}` };
+    return { code: TERM_CODES[t.name], week: Math.floor((toMs(date) - toMs(t.start)) / (7 * DAY)) + 1, label: `${t.name} ${t.year}` };
+  };
+
+  const el = (tag, cls, text, attrs = {}) => {
     const node = document.createElement(tag);
     if (cls) node.className = cls;
-    if (text !== undefined && text !== null) node.textContent = text;
+    if (text != null) node.textContent = text;
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
     return node;
   };
-  const add = (parent, ...children) => { children.forEach(child => parent.appendChild(child)); return parent; };
-  const speakerBlock = t => {
-    const fragment = document.createDocumentFragment();
-    if (validUrl(t.speakerUrl)) {
-      const a = el("a", "", t.speaker);
-      a.href = validUrl(t.speakerUrl); a.target = "_blank"; a.rel = "noopener noreferrer";
-      fragment.appendChild(a);
-    } else fragment.appendChild(document.createTextNode(t.speaker));
-    return fragment;
+  const add = (parent, ...children) => {
+    parent.append(...children);
+    return parent;
   };
+  const button = (cls, text, onClick, attrs) => {
+    const b = el("button", cls, text, { type: "button", ...attrs });
+    b.addEventListener("click", onClick);
+    return b;
+  };
+  const link = (cls, text, href) => el("a", cls, text, { href, target: "_blank", rel: "noopener noreferrer" });
 
   function renderNextTalk() {
-    const upcoming = talkList.filter(isUpcoming).sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
     const next = upcoming[0];
-    if (!next) return; // The HTML already contains the genuine "TBA" empty state.
-    const box = $("next-content"); box.replaceChildren();
+    if (!next) return; // index.html already shows the "to be announced" state.
     const term = getTerm(next.date);
-    add(box,
+    const box = $("next-content");
+    box.replaceChildren(
       el("div", "next-date", `${shortDate(next.date)}${term.week ? ` · Week ${term.week}` : ""}`),
-      el("h2", "", next.title)
+      el("h2", "", next.title),
+      el("div", "next-speaker", [next.speaker, next.affiliation].filter(Boolean).join(" · ")),
+      add(el("div", "next-meta"), el("span", "", next.time ? `${timeRange(next)} UK time` : "Time TBC"), el("span", "", next.room || "Room TBC"))
     );
-    const speaker = el("div", "next-speaker", `${next.speaker}${next.affiliation ? ` · ${next.affiliation}` : ""}`);
-    const meta = el("div", "next-meta");
-    add(meta, el("span", "", next.time ? `${next.time}${next.endTime ? `–${next.endTime}` : ""} UK time` : "Time TBC"), el("span", "", next.room || "Room TBC"));
-    box.appendChild(speaker); box.appendChild(meta);
-    if (next.status === "provisional") box.appendChild(el("p", "", "Details are provisional and may change."));
-    const footer = $("next-talk").querySelector(".next-footer");
-    const btn = el("button", "inline-arrow", "View talk details ↗");
-    btn.type = "button";
-    btn.style.cssText = "background:none;border:0;padding:0;font-size:11px";
-    btn.addEventListener("click", () => openTalkDialog([next]));
-    footer.lastElementChild.replaceWith(btn);
+    if (next.provisional) box.append(el("p", "", "Details are provisional and may change."));
+    $("next-talk").querySelector(".next-footer").lastElementChild
+      .replaceWith(button("inline-arrow", "View talk details ↗", () => openTalk(next)));
   }
 
-  function createTalkRow(talk) {
-    const row = el("button", "talk-row"); row.type="button";
-    row.setAttribute("aria-label", `Details for ${talk.title} by ${talk.speaker}, ${longDate(talk.date)}`);
-    const dateBox = el("span", "talk-datebox");
-    add(dateBox, el("b", "", talk.date.slice(8,10)), el("small", "", fmt(talk.date, { month:"short" }).toUpperCase()));
-    const content = el("span", "talk-row-main");
-    const title = el("span", "talk-row-title", talk.title);
-    const info = el("span", "talk-row-info");
-    add(info, el("b", "", talk.speaker), el("span", "", talk.affiliation || "Affiliation TBC"), el("span", "", "·"), el("span", "", talk.time ? `${talk.time} UK` : "Time TBC"), el("span", "", "·"), el("span", "", talk.room || "Room TBC"));
-    if (talk.status === "provisional") info.appendChild(el("span", "provisional", "PROVISIONAL"));
-    add(content, title, info);
-    add(row, dateBox, content, el("span", "talk-row-arrow", "↗"));
-    row.addEventListener("click", () => openTalkDialog([talk]));
-    return row;
+  function talkRow(talk) {
+    const info = add(el("span", "talk-row-info"),
+      el("b", "", talk.speaker), el("span", "", talk.affiliation || "Affiliation TBC"), el("span", "", "·"),
+      el("span", "", talk.time ? `${talk.time} UK` : "Time TBC"), el("span", "", "·"), el("span", "", talk.room || "Room TBC"));
+    if (talk.provisional) info.append(el("span", "provisional", "PROVISIONAL"));
+    return add(button("talk-row", null, () => openTalk(talk), { "aria-label": `Details for ${talk.title} by ${talk.speaker}, ${longDate(talk.date)}` }),
+      add(el("span", "talk-datebox"), el("b", "", talk.date.slice(8, 10)), el("small", "", fmt(talk.date, { month: "short" }).toUpperCase())),
+      add(el("span", "talk-row-main"), el("span", "talk-row-title", talk.title), info),
+      el("span", "talk-row-arrow", "↗"));
   }
 
   let filter = "all";
   function renderProgramme() {
-    const countUpcoming = talkList.filter(isUpcoming).length;
-    $("count-all").textContent = talkList.length;
-    $("count-upcoming").textContent = countUpcoming;
-    $("count-past").textContent = talkList.length - countUpcoming;
+    $("count-all").textContent = talks.length;
+    $("count-upcoming").textContent = upcoming.length;
+    $("count-past").textContent = talks.length - upcoming.length;
     const q = $("talk-search").value.trim().toLowerCase();
-    const filtered = talkList.filter(t => (filter === "all" || (filter === "upcoming" ? isUpcoming(t) : !isUpcoming(t))) &&
-      [t.title,t.speaker,t.affiliation,t.abstract,t.room].join(" ").toLowerCase().includes(q));
-    filtered.sort((a,b) => filter === "upcoming" ? a.date.localeCompare(b.date) || a.time.localeCompare(b.time) : b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
-    const out = $("programme-list"); out.replaceChildren();
-    if (!filtered.length) {
-      const empty = el("div", "empty-state");
-      add(empty, el("div", "empty-state-symbol", "✳"),
-        el("h3", "", q ? "No matching talks" : filter === "past" ? "No past talks yet" : filter === "upcoming" ? "More talks coming soon" : "The programme is taking shape"),
-        el("p", "", q ? "Try another speaker, topic or keyword." : "Confirmed speakers, dates, abstracts and slides will appear here as soon as they are available."));
-      const link = el("a", "", "Questions or suggestions? Contact the organisers ↗"); link.href="#contact"; empty.appendChild(link); out.appendChild(empty); return;
+    const shown = talks
+      .filter(t => filter === "all" || (filter === "upcoming") === isUpcoming(t))
+      .filter(t => [t.title, t.speaker, t.affiliation, t.abstract, t.room].join(" ").toLowerCase().includes(q))
+      .sort((a, b) => filter === "upcoming" ? byDateTime(a, b) : byDateTime(b, a));
+    const out = $("programme-list");
+    if (!shown.length) {
+      const heading = q ? "No matching talks" : { past: "No past talks yet", upcoming: "More talks coming soon" }[filter] || "The programme is taking shape";
+      const text = q ? "Try another speaker, topic or keyword." : "Confirmed speakers, dates, abstracts and slides will appear here as soon as they are available.";
+      out.replaceChildren(add(el("div", "empty-state"), el("div", "empty-state-symbol", "✳"), el("h3", "", heading), el("p", "", text),
+        el("a", "", "Questions or suggestions? Contact the organisers ↗", { href: "#contact" })));
+      return;
     }
-    const grouped = new Map();
-    for (const talk of filtered) {
+    const groups = new Map(); // term label -> week label -> talks
+    for (const talk of shown) {
       const term = getTerm(talk.date);
-      if (!grouped.has(term.label)) grouped.set(term.label, { term, talks:[] });
-      grouped.get(term.label).talks.push(talk);
+      const week = term.week ? `${term.code}W${term.week} · Week ${term.week} · ${shortDate(talk.date)}` : "Outside term";
+      if (!groups.has(term.label)) groups.set(term.label, new Map());
+      const weeks = groups.get(term.label);
+      weeks.set(week, [...(weeks.get(week) || []), talk]);
     }
-    for (const {term, talks} of grouped.values()) {
-      const group = el("div", "term-group");
-      const header = el("div", "term-header");
-      add(header, el("h3", "", term.label), el("span", "", `${talks.length} ${talks.length === 1 ? "talk" : "talks"}`));
-      group.appendChild(header);
-      const weeks = new Map();
-      for (const talk of talks) {
-        const wk = getTerm(talk.date).week;
-        const code = {Michaelmas:"MT",Hilary:"HT",Trinity:"TT"}[term.name] || "";
-        const key = wk === null ? "Outside term" : `${code}W${wk} · Week ${wk} · ${shortDate(talk.date)}`;
-        if (!weeks.has(key)) weeks.set(key, []);
-        weeks.get(key).push(talk);
-      }
-      for (const [label, weekTalks] of weeks) {
-        const week = el("div", "week-group");
-        const list = el("div", "week-talks");
-        weekTalks.forEach(t => list.appendChild(createTalkRow(t)));
-        add(week, el("div", "week-label", label), list);
-        group.appendChild(week);
-      }
-      out.appendChild(group);
-    }
+    out.replaceChildren(...[...groups].map(([label, weeks]) => {
+      const count = [...weeks.values()].flat().length;
+      return add(el("div", "term-group"),
+        add(el("div", "term-header"), el("h3", "", label), el("span", "", `${count} ${count === 1 ? "talk" : "talks"}`)),
+        ...[...weeks].map(([week, ts]) => add(el("div", "week-group"), el("div", "week-label", week), add(el("div", "week-talks"), ...ts.map(talkRow)))));
+    }));
   }
 
-  const atMidnight = s => Date.parse(`${s}T00:00:00Z`);
-  const dateFromMs = ms => new Date(ms).toISOString().slice(0,10);
-  const termCodes = { Michaelmas:"MT", Hilary:"HT", Trinity:"TT" };
-  let termIndex = 0;
-  function initialTermIndex() {
-    const today = atMidnight(now().date);
-    const current = terms.findIndex(t => today >= atMidnight(t.start) && today < atMidnight(t.start)+56*MS_DAY);
-    if (current >= 0) return current;
-    // Prefer the term containing the next announced talk, then the next upcoming term.
-    const upcoming = talkList.filter(isUpcoming).sort((a,b)=>a.date.localeCompare(b.date))[0];
-    if (upcoming) {
-      const i = terms.findIndex(t => atMidnight(upcoming.date) >= atMidnight(t.start) && atMidnight(upcoming.date) < atMidnight(t.start)+56*MS_DAY);
-      if (i>=0) return i;
-    }
-    const future = terms.findIndex(t => atMidnight(t.start)>today);
-    return future>=0 ? future : Math.max(0,terms.length-1);
-  }
+  // Show the current term, else the next talk's term, else the next term to start, else the last.
+  let termIndex = [termIndexOf(now.date), upcoming[0] ? termIndexOf(upcoming[0].date) : -1, terms.findIndex(t => t.start > now.date)]
+    .find(i => i >= 0) ?? terms.length - 1;
+
   function renderCalendar() {
-    const term = terms[termIndex]; if (!term) return;
+    const term = terms[termIndex];
+    if (!term) return;
+    const start = toMs(term.start);
+    const dayMonth = ms => fmt(fromMs(ms), { day: "numeric", month: "short" });
     $("term-heading").textContent = `${term.name} ${term.year}`;
-    $("term-range").textContent = `${shortDate(term.start)} – ${shortDate(dateFromMs(atMidnight(term.start)+55*MS_DAY))}`;
+    $("term-range").textContent = `${shortDate(term.start)} – ${shortDate(fromMs(start + 55 * DAY))}`;
     $("term-select").value = String(termIndex);
-    $("term-prev").disabled = termIndex===0;
-    $("term-next").disabled = termIndex===terms.length-1;
-    const grid = $("term-calendar"); grid.replaceChildren();
-    for (const name of ["WEEK", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]) {
-      const cell=el("div","term-cal-header",name);cell.setAttribute("role","columnheader"); grid.appendChild(cell);
-    }
-    for (let week=1; week<=8; week++) {
-      const first=atMidnight(term.start)+(week-1)*7*MS_DAY;
-      const last=first+6*MS_DAY;
-      const weekCell=el("div","term-week-cell");
-      add(weekCell,el("strong","",`${termCodes[term.name]}W${week}`),el("small","",`${fmt(dateFromMs(first),{day:"numeric",month:"short"})} – ${fmt(dateFromMs(last),{day:"numeric",month:"short"})}`));
-      weekCell.setAttribute("role","rowheader");grid.appendChild(weekCell);
-      for (let d=0; d<7; d++) {
-        const date=dateFromMs(first+d*MS_DAY);
-        const cell=el("div","term-day-cell"+(date===now().date?" today":"")+(d===5?" friday":""));
-        cell.setAttribute("role","gridcell");cell.setAttribute("aria-label",longDate(date));
-        const dayEl=el("span","term-day-date",String(Number(date.slice(8,10))));
-        if (d===0 || date.endsWith("-01")) dayEl.appendChild(el("small","",fmt(date,{month:"short"})));
-        cell.appendChild(dayEl);
-        talkList.filter(t=>t.date===date).sort((a,b)=>a.time.localeCompare(b.time)).forEach(talk=>{
-          const btn=el("button","cal-event",talk.speaker||talk.title);
-          btn.type="button";btn.title=talk.title;
-          btn.setAttribute("aria-label",`${talk.title} by ${talk.speaker}, ${longDate(date)}. Open details`);
-          btn.addEventListener("click",()=>openTalkDialog([talk]));
-          cell.appendChild(btn);
-        });
-        grid.appendChild(cell);
+    $("term-prev").disabled = termIndex === 0;
+    $("term-next").disabled = termIndex === terms.length - 1;
+    const cells = ["WEEK", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(name => el("div", "term-cal-header", name, { role: "columnheader" }));
+    for (let week = 0; week < 8; week++) {
+      const first = start + week * 7 * DAY;
+      cells.push(add(el("div", "term-week-cell", null, { role: "rowheader" }),
+        el("strong", "", `${TERM_CODES[term.name]}W${week + 1}`), el("small", "", `${dayMonth(first)} – ${dayMonth(first + 6 * DAY)}`)));
+      for (let d = 0; d < 7; d++) {
+        const date = fromMs(first + d * DAY);
+        const day = el("span", "term-day-date", String(Number(date.slice(8, 10))));
+        if (d === 0 || date.endsWith("-01")) day.append(el("small", "", fmt(date, { month: "short" })));
+        const events = talks.filter(t => t.date === date).sort(byDateTime).map(talk =>
+          button("cal-event", talk.speaker, () => openTalk(talk), { title: talk.title, "aria-label": `${talk.title} by ${talk.speaker}, ${longDate(date)}. Open details` }));
+        const cls = `term-day-cell${date === now.date ? " today" : ""}${d === 5 ? " friday" : ""}`;
+        cells.push(add(el("div", cls, null, { role: "gridcell", "aria-label": longDate(date) }), day, ...events));
       }
     }
+    $("term-calendar").replaceChildren(...cells);
   }
-  function renderTalkDetails(talk, outer) {
+
+  function openTalk(talk) {
     const term = getTerm(talk.date);
-    const box = el("div", "dialog-body" + (outer ? " dialog-multiple" : ""));
-    add(box,
-      el("div", "dialog-term", `${term.label}${term.week ? ` · Week ${term.week}` : ""}${talk.status === "provisional" ? " · PROVISIONAL" : ""}`),
-      el("h2", "", talk.title)
-    );
-    const speaker = el("div", "dialog-speaker"); speaker.appendChild(speakerBlock(talk));
-    add(box, speaker, el("div", "dialog-affiliation", talk.affiliation || "Affiliation to be confirmed"));
-    const meta = el("div", "dialog-metadata");
-    const cells = [
+    const speakerUrl = safeUrl(talk.speakerUrl), slides = safeUrl(talk.slides, true), zoom = safeUrl(talk.zoomUrl);
+    const meta = [
       ["DATE", longDate(talk.date)],
-      ["TIME", talk.time ? `${talk.time}${talk.endTime ? `–${talk.endTime}` : ""} (UK)` : "To be confirmed"],
+      ["TIME", talk.time ? `${timeRange(talk)} (UK)` : "To be confirmed"],
       ["VENUE", "Department of Statistics, Oxford"],
       ["ROOM", talk.room || "To be confirmed"]
-    ];
-    for (const [label, value] of cells) {
-      const wrapper = el("div"); add(wrapper,el("small", "", label),el("strong", "", value)); meta.appendChild(wrapper);
-    }
-    box.appendChild(meta);
-    add(box,el("div", "dialog-abstract-label", "ABSTRACT"),el("p", "dialog-abstract", talk.abstract || "Abstract to be announced."));
-    const actions = el("div", "dialog-actions");
-    if (validUrl(talk.slides, true)) {
-      const a = el("a", "btn btn-primary", "Download slides ↗");
-      a.href = validUrl(talk.slides, true); a.target="_blank"; a.rel="noopener noreferrer"; actions.appendChild(a);
-    } else actions.appendChild(el("span", "dialog-no-slides", "Slides not currently available."));
-    if (validUrl(talk.zoomUrl)) {
-      const z=el("a","btn zoom-link","Zoom link ↗");z.href=validUrl(talk.zoomUrl);z.target="_blank";z.rel="noopener noreferrer";
-      actions.appendChild(z);
-      actions.appendChild(el("span","zoom-passcode","Passcode: contact the organisers if needed"));
-    }
-    box.appendChild(actions);
-    return box;
-  }
-  function openTalkDialog(talks) {
-    const body = $("dialog-body"); body.replaceChildren();
-    talks.forEach(t => body.appendChild(renderTalkDetails(t, talks.length > 1)));
+    ].map(([label, value]) => add(el("div"), el("small", "", label), el("strong", "", value)));
+    const actions = add(el("div", "dialog-actions"),
+      slides ? link("btn btn-primary", "Download slides ↗", slides) : el("span", "dialog-no-slides", "Slides not currently available."));
+    if (zoom) actions.append(link("btn zoom-link", "Zoom link ↗", zoom), el("span", "zoom-passcode", "Passcode: contact the organisers if needed"));
+    $("dialog-body").replaceChildren(add(el("div", "dialog-body"),
+      el("div", "dialog-term", `${term.label}${term.week ? ` · Week ${term.week}` : ""}${talk.provisional ? " · PROVISIONAL" : ""}`),
+      el("h2", "", talk.title),
+      add(el("div", "dialog-speaker"), speakerUrl ? link("", talk.speaker, speakerUrl) : talk.speaker),
+      el("div", "dialog-affiliation", talk.affiliation || "Affiliation to be confirmed"),
+      add(el("div", "dialog-metadata"), ...meta),
+      el("div", "dialog-abstract-label", "ABSTRACT"),
+      el("p", "dialog-abstract", talk.abstract || "Abstract to be announced."),
+      actions));
     $("talk-dialog").showModal();
   }
 
-  function setupMisc() {
-    $("footer-year").textContent = `© ${now().year}`;
-    if (config.organisersRepoUrl && validUrl(config.organisersRepoUrl) && /^https:\/\/github\.com\//.test(config.organisersRepoUrl)) {
-      $("organisers-link").href = validUrl(config.organisersRepoUrl);
-      $("organisers-link").hidden = false;
-    }
-    $("dialog-close").addEventListener("click", () => $("talk-dialog").close());
-    for (const dialog of [$("talk-dialog")]) {
-      dialog.addEventListener("click", e => { if (e.target === dialog) dialog.close(); });
-    }
-    document.querySelectorAll(".tab").forEach(button => button.addEventListener("click", () => {
-      filter = button.dataset.filter;
-      document.querySelectorAll(".tab").forEach(b => {
-        const current = b === button; b.classList.toggle("active", current); b.setAttribute("aria-pressed",String(current));
-      });
-      renderProgramme();
-    }));
-    $("talk-search").addEventListener("input",renderProgramme);
-    const select = $("term-select");
-    terms.forEach((term,i)=>{const option=el("option","",`${term.name} ${term.year}`);option.value=String(i);select.appendChild(option);});
-    termIndex=initialTermIndex();
-    select.addEventListener("change",()=>{termIndex=Number(select.value);renderCalendar();});
-    $("term-prev").addEventListener("click",()=>{termIndex=Math.max(0,termIndex-1);renderCalendar();});
-    $("term-next").addEventListener("click",()=>{termIndex=Math.min(terms.length-1,termIndex+1);renderCalendar();});
-  }
-  setupMisc();
+  $("footer-year").textContent = `© ${now.year}`;
+  const dialog = $("talk-dialog");
+  $("dialog-close").addEventListener("click", () => dialog.close());
+  dialog.addEventListener("click", e => { if (e.target === dialog) dialog.close(); });
+
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(tab => tab.addEventListener("click", () => {
+    filter = tab.dataset.filter;
+    tabs.forEach(t => {
+      t.classList.toggle("active", t === tab);
+      t.setAttribute("aria-pressed", String(t === tab));
+    });
+    renderProgramme();
+  }));
+  $("talk-search").addEventListener("input", renderProgramme);
+
+  const select = $("term-select");
+  select.append(...terms.map((t, i) => el("option", "", `${t.name} ${t.year}`, { value: i })));
+  const showTerm = i => {
+    termIndex = Math.min(Math.max(i, 0), terms.length - 1);
+    renderCalendar();
+  };
+  select.addEventListener("change", () => showTerm(Number(select.value)));
+  $("term-prev").addEventListener("click", () => showTerm(termIndex - 1));
+  $("term-next").addEventListener("click", () => showTerm(termIndex + 1));
+
   renderNextTalk();
   renderProgramme();
   renderCalendar();
