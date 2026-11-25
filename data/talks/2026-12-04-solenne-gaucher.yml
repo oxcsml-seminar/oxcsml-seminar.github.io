@@ -1,0 +1,26 @@
+date: 2026-12-04
+time: 15:00
+endTime: 16:00
+room: Small Lecture Theatre
+speaker: Solenne Gaucher
+affiliation: École Polytechnique
+speakerUrl: https://solennegaucher.github.io/
+title: >-
+  Geometry of fair regression
+abstract: >-
+  Machine learning algorithms increasingly inform high-stakes decisions,
+  raising concerns about discrimination against protected groups. In this
+  talk, I will introduce statistical fairness, focusing on demographic
+  parity for regression in the unawareness framework, where the sensitive
+  attribute is unavailable at prediction time. I will first show that the
+  optimal fair predictor is characterised by a barycenter problem with
+  optimal transport costs, which recovers the classical aware setting as
+  a special case. I will then consider relaxed fairness constraints that
+  trade off fairness against accuracy. Under Wasserstein-2 and total
+  variation penalties, the optimal predictor admits closed-form
+  expressions via optimal transport, and the two penalties reveal
+  distinct notions of fairness. Finally, I will present FAUST, an
+  efficient post-processing algorithm derived from these results.
+slides:
+zoomUrl: https://zoom.us/j/94765838077
+status: confirmed
