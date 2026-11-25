@@ -37,7 +37,7 @@
     title: t.title || "Title to be announced", abstract: t.abstract || "", slides: t.slides || "", zoomUrl: t.zoomUrl || "",
     provisional: t.status === "provisional"
   }));
-  const isUpcoming = t => t.date > now.date || (t.date === now.date && (!t.time || t.time >= now.time));
+  const isUpcoming = t => t.date > now.date || (t.date === now.date && (t.endTime ? now.time < t.endTime : (!t.time || t.time >= now.time)));
   const upcoming = talks.filter(isUpcoming).sort(byDateTime);
 
   // Oxford Full Term: eight weeks, each Sunday–Saturday, from the term's start date.
@@ -96,20 +96,15 @@
       el("span", "talk-row-arrow", "↗"));
   }
 
-  let filter = "all";
+  let filter = "upcoming";
   function renderProgramme() {
-    $("count-all").textContent = talks.length;
     $("count-upcoming").textContent = upcoming.length;
     $("count-past").textContent = talks.length - upcoming.length;
     const q = $("talk-search").value.trim().toLowerCase();
     const shown = talks
-      .filter(t => filter === "all" || (filter === "upcoming") === isUpcoming(t))
+      .filter(t => (filter === "upcoming") === isUpcoming(t))
       .filter(t => [t.title, t.speaker, t.affiliation, t.abstract, t.room].join(" ").toLowerCase().includes(q))
-      .sort((a, b) => {
-        const ua = isUpcoming(a), ub = isUpcoming(b);
-        if (ua !== ub) return ua ? -1 : 1;
-        return ua ? byDateTime(a, b) : byDateTime(b, a);
-      });
+      .sort((a, b) => filter === "upcoming" ? byDateTime(a, b) : byDateTime(b, a));
     const out = $("programme-list");
     if (!shown.length) {
       const heading = q ? "No matching talks" : { past: "No past talks yet", upcoming: "More talks coming soon" }[filter] || "The programme is taking shape";
