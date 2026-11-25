@@ -1,14 +1,14 @@
 # OxCSML Seminar Series website
 
-Static site for the OxCSML seminar (Department of Statistics, University of Oxford), deployed to GitHub Pages by a GitHub Action.
+Static site for the OxCSML seminar series.
 
 ## Adding or updating a talk
 
-Each talk is one file in [`data/talks/`](data/talks/), named `YYYY-MM-DD-speaker-name.yml`.
+Each talk is one file in [`data/talks/`](data/talks/), named `YYYY-MM-DD-speaker-name.yml`. To add a new talk:
 
-1. Copy [`data/talks/_template.yml`](data/talks/_template.yml) to a new file in `data/talks/` (the GitHub web editor is fine).
-2. Fill in what is known. Only `date` is required; blank fields show as "TBC" / "to be announced" on the site.
-3. Commit to `main`. The site rebuilds automatically within a couple of minutes.
+1. Make a new file in `data/talks/`, starting from the template [`data/talks/_template.yml`](data/talks/_template.yml)
+2. Fill in the details. Only `date` is required; blank fields show as "TBC" / "to be announced" on the site.
+3. Commit to `main`. The site rebuilds automatically.
 
 To update a talk later, edit its file; to cancel one, delete it. If a file has a mistake (bad date or time, misspelled field, invalid YAML), the build fails with a message pointing at the file and the live site is left unchanged; check the **Actions** tab.
 
@@ -18,13 +18,13 @@ Slides: put speaker-approved PDFs in `site/assets/slides/` and set `slides: asse
 
 ## Local preview
 
+If you'd like to make further changes to the site, you can preview your changes locally as follows:
+
 ```sh
 pip install pyyaml
 python3 build.py                  # data/ -> site/assets/js/data.js
 python3 -m http.server -d site    # http://localhost:8000
 ```
-
-`site/assets/js/data.js` is generated; don't edit or commit it.
 
 ## Layout
 
@@ -33,6 +33,13 @@ python3 -m http.server -d site    # http://localhost:8000
 - `build.py`: validates `data/` and writes `site/assets/js/data.js`.
 - `.github/workflows/pages.yml`: runs `build.py` on every push to `main` and deploys `site/`.
 
-## One-time GitHub setup
+# Organisers
 
-In the repository's **Settings → Pages**, set **Source** to **GitHub Actions**.
+The current organisers for the OxCSML seminar series are:
+
+- [Eugenio Clerico](https://eugenioclerico.me/)
+- [Arya Akhavan](https://aryaakhavan.github.io/)
+- [Benjamin Dupuis](https://benjidupuis.github.io/)
+- [Gavin Kerrigan](https://gavinkerrigan.github.io/)
+
+Please feel free to contact us if you have any questions or comments about the seminars.
